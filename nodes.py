@@ -32,6 +32,7 @@ try:
 except:
     pass
 from comfy.utils import ProgressBar
+cache_dir = '/stable-diffusion-cache/models'
 
 class DownloadAndLoadKolorsModel:
     @classmethod
@@ -65,13 +66,16 @@ class DownloadAndLoadKolorsModel:
         model_path = os.path.join(folder_paths.models_dir, "diffusers", model_name)
       
         if not os.path.exists(model_path):
-            print(f"Downloading Kolor model to: {model_path}")
-            from huggingface_hub import snapshot_download
-            snapshot_download(repo_id=model,
-                            allow_patterns=['*fp16.safetensors*', '*.json'],
-                            ignore_patterns=['vae/*', 'text_encoder/*', 'tokenizer/*'],
-                            local_dir=model_path,
-                            local_dir_use_symlinks=False)
+            if os.path.exists(cache_dir):
+                model_path = os.path.join(cache_dir, 'diffusers', model_name)
+            else:
+                print(f"Downloading Kolor model to: {model_path}")
+                from huggingface_hub import snapshot_download
+                snapshot_download(repo_id=model,
+                                allow_patterns=['*fp16.safetensors*', '*.json'],
+                                ignore_patterns=['vae/*', 'text_encoder/*', 'tokenizer/*'],
+                                local_dir=model_path,
+                                local_dir_use_symlinks=False)
         pbar.update(1)
 
         scheduler = EulerDiscreteScheduler.from_pretrained(model_path, subfolder= 'scheduler')
@@ -167,13 +171,16 @@ class DownloadAndLoadChatGLM3:
         text_encoder_path = os.path.join(model_path, "text_encoder")
       
         if not os.path.exists(text_encoder_path):
-            print(f"Downloading ChatGLM3 to: {text_encoder_path}")
-            from huggingface_hub import snapshot_download
-            snapshot_download(repo_id=model,
-                            allow_patterns=['text_encoder/*'],
-                            ignore_patterns=['*.py', '*.pyc'],
-                            local_dir=model_path,
-                            local_dir_use_symlinks=False)
+            if os.path.exists(cache_dir):
+                text_encoder_path = os.path.exists(cache_dir, 'diffusers', model_name, 'text_encoder')
+            else:
+                print(f"Downloading ChatGLM3 to: {text_encoder_path}")
+                from huggingface_hub import snapshot_download
+                snapshot_download(repo_id=model,
+                                allow_patterns=['text_encoder/*'],
+                                ignore_patterns=['*.py', '*.pyc'],
+                                local_dir=model_path,
+                                local_dir_use_symlinks=False)
         pbar.update(1)
 
         print("Load TEXT_ENCODER...")
