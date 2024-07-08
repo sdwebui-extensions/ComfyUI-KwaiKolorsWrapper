@@ -172,7 +172,7 @@ class DownloadAndLoadChatGLM3:
       
         if not os.path.exists(text_encoder_path):
             if os.path.exists(cache_dir):
-                text_encoder_path = os.path.exists(cache_dir, 'diffusers', model_name, 'text_encoder')
+                text_encoder_path = os.path.join(cache_dir, 'diffusers', model_name, 'text_encoder')
             else:
                 print(f"Downloading ChatGLM3 to: {text_encoder_path}")
                 from huggingface_hub import snapshot_download
