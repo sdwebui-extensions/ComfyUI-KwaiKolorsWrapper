@@ -25,12 +25,10 @@ from diffusers import (DPMSolverMultistepScheduler,
 )
 
 from contextlib import nullcontext
-try:
-    from accelerate import init_empty_weights
-    from accelerate.utils import set_module_tensor_to_device
-    is_accelerate_available = True
-except:
-    pass
+init_empty_weights = None
+set_module_tensor_to_device = None
+is_accelerate_available = False
+
 from comfy.utils import ProgressBar
 cache_dir = '/stable-diffusion-cache/models'
 
@@ -120,6 +118,14 @@ class LoadChatGLM3:
             config = json.load(file)
 
         text_encoder_config = ChatGLMConfig(**config)
+        global init_empty_weights, is_accelerate_available, set_module_tensor_to_device
+        if init_empty_weights is None:
+            try:
+                from accelerate import init_empty_weights
+                from accelerate.utils import set_module_tensor_to_device
+                is_accelerate_available = True
+            except:
+                init_empty_weights = 'import failed'
         with (init_empty_weights() if is_accelerate_available else nullcontext()):
             text_encoder = ChatGLMModel(text_encoder_config)
             if '4bit' in chatglm3_checkpoint:
