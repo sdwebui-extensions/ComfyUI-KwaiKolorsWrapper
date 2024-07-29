@@ -23,10 +23,10 @@ from transformers.modeling_outputs import (
 )
 from transformers.modeling_utils import PreTrainedModel
 from transformers.utils import logging
-from transformers.generation.logits_process import LogitsProcessor
 from transformers.generation.utils import GenerationConfig, ModelOutput
 LogitsProcessorList = None
 StoppingCriteriaList = None
+LogitsProcessor = None
 
 try:
     from .configuration_chatglm import ChatGLMConfig
@@ -57,12 +57,12 @@ def default_init(cls, *args, **kwargs):
     return cls(*args, **kwargs)
 
 
-class InvalidScoreLogitsProcessor(LogitsProcessor):
-    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
-        if torch.isnan(scores).any() or torch.isinf(scores).any():
-            scores.zero_()
-            scores[..., 5] = 5e4
-        return scores
+# class InvalidScoreLogitsProcessor(LogitsProcessor):
+#     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+#         if torch.isnan(scores).any() or torch.isinf(scores).any():
+#             scores.zero_()
+#             scores[..., 5] = 5e4
+#         return scores
 
 
 class PrefixEncoder(torch.nn.Module):
@@ -1035,7 +1035,9 @@ class ChatGLMForConditionalGeneration(ChatGLMPreTrainedModel):
             history = []
         if logits_processor is None:
             logits_processor = LogitsProcessorList()
-        logits_processor.append(InvalidScoreLogitsProcessor())
+        if LogitsProcessor is None:
+            from transformers.generation.logits_process import LogitsProcessor
+        logits_processor.append(LogitsProcessor())
         gen_kwargs = {"max_length": max_length, "num_beams": num_beams, "do_sample": do_sample, "top_p": top_p,
                       "temperature": temperature, "logits_processor": logits_processor, **kwargs}
         inputs = tokenizer.build_chat_input(query, history=history, role=role)
@@ -1060,7 +1062,9 @@ class ChatGLMForConditionalGeneration(ChatGLMPreTrainedModel):
             history = []
         if logits_processor is None:
             logits_processor = LogitsProcessorList()
-        logits_processor.append(InvalidScoreLogitsProcessor())
+        if LogitsProcessor is None:
+            from transformers.generation.logits_process import LogitsProcessor
+        logits_processor.append(LogitsProcessor())
         eos_token_id = [tokenizer.eos_token_id, tokenizer.get_command("<|user|>"),
                         tokenizer.get_command("<|observation|>")]
         gen_kwargs = {"max_length": max_length, "do_sample": do_sample, "top_p": top_p,
