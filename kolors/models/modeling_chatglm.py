@@ -24,7 +24,9 @@ from transformers.modeling_outputs import (
 from transformers.modeling_utils import PreTrainedModel
 from transformers.utils import logging
 from transformers.generation.logits_process import LogitsProcessor
-from transformers.generation.utils import LogitsProcessorList, StoppingCriteriaList, GenerationConfig, ModelOutput
+from transformers.generation.utils import GenerationConfig, ModelOutput
+LogitsProcessorList = None
+StoppingCriteriaList = None
 
 try:
     from .configuration_chatglm import ChatGLMConfig
@@ -1026,6 +1028,9 @@ class ChatGLMForConditionalGeneration(ChatGLMPreTrainedModel):
     def chat(self, tokenizer, query: str, history: List[Tuple[str, str]] = None, role: str = "user",
              max_length: int = 8192, num_beams=1, do_sample=True, top_p=0.8, temperature=0.8, logits_processor=None,
              **kwargs):
+        global LogitsProcessorList
+        if LogitsProcessorList is None:
+            from transformers.generation.utils import LogitsProcessorList
         if history is None:
             history = []
         if logits_processor is None:
@@ -1048,6 +1053,9 @@ class ChatGLMForConditionalGeneration(ChatGLMPreTrainedModel):
     def stream_chat(self, tokenizer, query: str, history: List[Tuple[str, str]] = None, role: str = "user",
                     past_key_values=None,max_length: int = 8192, do_sample=True, top_p=0.8, temperature=0.8,
                     logits_processor=None, return_past_key_values=False, **kwargs):
+        global LogitsProcessorList
+        if LogitsProcessorList is None:
+            from transformers.generation.utils import LogitsProcessorList
         if history is None:
             history = []
         if logits_processor is None:
@@ -1090,12 +1098,15 @@ class ChatGLMForConditionalGeneration(ChatGLMPreTrainedModel):
             self,
             input_ids,
             generation_config: Optional[GenerationConfig] = None,
-            logits_processor: Optional[LogitsProcessorList] = None,
-            stopping_criteria: Optional[StoppingCriteriaList] = None,
+            logits_processor = None,
+            stopping_criteria = None,
             prefix_allowed_tokens_fn: Optional[Callable[[int, torch.Tensor], List[int]]] = None,
             return_past_key_values=False,
             **kwargs,
     ):
+        global LogitsProcessorList, StoppingCriteriaList
+        if LogitsProcessorList is None:
+            from transformers.generation.utils import LogitsProcessorList, StoppingCriteriaList
         batch_size, input_ids_seq_length = input_ids.shape[0], input_ids.shape[-1]
 
         if generation_config is None:
